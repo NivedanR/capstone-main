@@ -14,11 +14,11 @@ export const createOrder = async (orderData: any) => {
 };
 
 export const getAllOrders = async () => {
-  return await OrderModel.find().populate('branchId salesPersonId');
+  return await OrderModel.find();//.populate('branchId salesPersonId');
 };
 
 export const getOrderById = async (id: string) => {
-  return await OrderModel.findById(id).populate('branchId salesPersonId');
+  return await OrderModel.findById(id);//.populate('branchId salesPersonId');
 };
 
 export const updateOrder = async (id: string, data: any) => {
