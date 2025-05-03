@@ -7,6 +7,7 @@ import {
   createBranch,
   getAllBranches,
   getBranchesByWarehouseId,
+  getBranchStock,
   getBranchWithWarehouseInfo,
 } from '../controllers/branch.controller';
 
@@ -16,5 +17,7 @@ router.get('/branch-with-warehouse/:branchId', getBranchWithWarehouseInfo);//bet
 
 router.post('/branches', createBranch);
 router.get('/branches', getAllBranches);
+
+router.get('/branches/:id/stock', getBranchStock);
 
 export default router;

@@ -93,3 +93,24 @@ export const getWarehouseById = async (req: Request, res: Response): Promise<voi
     res.status(500).json({ message: 'Server error' });
   }
 };
+
+const STOCK_SERVICE_URL = process.env.STOCK_SERVICE_URL || 'http://localhost:5005';
+
+// Function to fetch stock details for a warehouse
+export const getWarehouseStock = async (req: Request, res: Response): Promise<void> => {
+  const { warehouseId } = req.params;
+
+  try {
+    // Make a GET request to the stock service to fetch stock for the warehouse
+    const response = await axios.get(`${STOCK_SERVICE_URL}/api/stocks/warehouse/${warehouseId}`);
+
+    // If the response contains the stock data, return it
+    res.status(200).json({
+      warehouseId,
+      stock: response.data.data,
+    });
+  } catch (error: any) {
+    console.error('Error fetching stock info:', error.message);
+    res.status(500).json({ message: 'Failed to fetch stock data' });
+  }
+};

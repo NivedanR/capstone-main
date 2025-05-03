@@ -1,27 +1,30 @@
-import express, { Request, Response } from 'express';
+import express from 'express';
 import dotenv from 'dotenv';
-import { connectDB } from './config/db';  // Adjust the import path based on your file structure
+import { connectDB } from './config/db';
 import companyRoutes from './routes/company.routes';
-import { errorHandler } from './middlewares/error.middleware';
 
 dotenv.config();
 
 const app = express();
-
-// Middleware
 app.use(express.json());
 
-// Routes
+// Mount the company routes under /api/company
 app.use('/api/company', companyRoutes);
 
-// Error Handling Middleware
-app.use(errorHandler);
+// A catch-all to log any unmatched routes
+app.use((req, res) => {
+  console.log(`❓ Unmatched route: ${req.method} ${req.originalUrl}`);
+  res.status(404).json({ error: `No handler for ${req.method} ${req.originalUrl}` });
+});
 
-// Connect to the database
-connectDB();
+// Global error handler
+app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  console.error('🔥 Unhandled Error:', err);
+  res.status(500).json({ error: err.message || 'Server error' });
+});
 
-// Start the server
-const PORT: number = Number(process.env.PORT) || 5000;
-app.listen(PORT, () => {
-  console.log(`Company service running on port ${PORT}`);
+// Start
+const PORT = Number(process.env.PORT) || 5001;
+connectDB().then(() => {
+  app.listen(PORT, () => console.log(`Company service running on port ${PORT}`));
 });

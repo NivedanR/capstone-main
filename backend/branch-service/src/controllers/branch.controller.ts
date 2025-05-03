@@ -84,3 +84,21 @@ export const getBranchWithWarehouseInfo = (req: Request, res: Response) => {
       res.status(500).json({ message: 'Server error', error });
     });
 };
+
+
+const STOCK_SERVICE_URL = 'http://localhost:5005/api/stocks';
+
+export const getBranchStock = async (req: Request, res: Response) => {
+  const { id: branchId } = req.params;
+
+  try {
+    const response = await axios.get(`${STOCK_SERVICE_URL}?branchId=${branchId}`);
+    res.status(200).json({
+      message: 'Branch stock fetched successfully',
+      data: response.data.data,
+    });
+  } catch (error: any) {
+    console.error('Error fetching branch stock:', error.message);
+    res.status(500).json({ message: 'Failed to fetch branch stock' });
+  }
+};

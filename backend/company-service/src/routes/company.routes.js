@@ -6,4 +6,6 @@ const router = (0, express_1.Router)();
 router.post('/', company_controller_1.createCompany);
 router.get('/', company_controller_1.getCompanies);
 router.get('/:id', company_controller_1.getCompanyById);
+router.get('/:id/products', company_controller_1.getCompanyWithProducts);
+console.log('🔌 company.routes.ts is loaded');
 exports.default = router;

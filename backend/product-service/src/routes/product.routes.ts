@@ -12,4 +12,6 @@ router.get('/', ProductController.getProducts);
 // Get product by ID
 router.get('/:id', ProductController.getProductById);
 
+router.get('/company/:companyId', ProductController.getProductsByCompanyId);
+
 export default router;

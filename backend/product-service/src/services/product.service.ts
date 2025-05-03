@@ -14,6 +14,9 @@ class ProductService {
   static async getProductById(id: string) {
     return Product.findById(id);//.populate('companyId');
   }
+  // static async getProductsByCompany(companyId: string) {
+  //   return Product.find({ companyId });
+  // }
 }
 
 export default ProductService;

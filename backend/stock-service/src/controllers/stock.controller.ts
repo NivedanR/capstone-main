@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import StockOverview from '../models/stockOverview.model';
 
+// Create
 export const createStock = async (
   req: Request,
   res: Response,
@@ -15,6 +16,7 @@ export const createStock = async (
   }
 };
 
+// Get all
 export const getAllStocks = async (
   req: Request,
   res: Response,
@@ -22,15 +24,13 @@ export const getAllStocks = async (
 ): Promise<void> => {
   try {
     const stocks = await StockOverview.find();
-      // .populate('productId')
-      // .populate('warehouseId')
-      // .populate('branchId');
     res.json({ data: stocks });
   } catch (err: any) {
     next(err);
   }
 };
 
+// Get by ID
 export const getStockById = async (
   req: Request,
   res: Response,
@@ -38,9 +38,6 @@ export const getStockById = async (
 ): Promise<void> => {
   try {
     const stock = await StockOverview.findById(req.params.id);
-      // .populate('productId')
-      // .populate('warehouseId')
-      // .populate('branchId');
     if (!stock) {
       res.status(404).json({ message: 'Stock not found' });
       return;
@@ -51,6 +48,7 @@ export const getStockById = async (
   }
 };
 
+// Update
 export const updateStock = async (
   req: Request,
   res: Response,
@@ -72,6 +70,7 @@ export const updateStock = async (
   }
 };
 
+// Delete
 export const deleteStock = async (
   req: Request,
   res: Response,
@@ -85,6 +84,54 @@ export const deleteStock = async (
     }
     res.json({ message: 'Stock deleted' });
   } catch (err: any) {
+    next(err);
+  }
+};
+
+// Get by warehouseId
+export const getStockByWarehouseId = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { warehouseId } = req.params;
+    if (!warehouseId) {
+      res.status(400).json({ message: 'warehouseId is required' });
+      return;
+    }
+    const stocks = await StockOverview.find({ warehouseId });
+    if (!stocks.length) {
+      res.status(404).json({ message: 'No stock found for the warehouse' });
+      return;
+    }
+    res.status(200).json({ data: stocks });
+  } catch (err: any) {
+    console.error('Error fetching stock by warehouse:', err.message);
+    next(err);
+  }
+};
+
+// Get by branchId (from query string)
+export const getStockByBranchId = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const branchId = req.params.branchId as string;
+    if (!branchId) {
+      res.status(400).json({ message: 'branchId is required' });
+      return;
+    }
+    const stocks = await StockOverview.find({ branchId });
+    if (!stocks.length) {
+      res.status(404).json({ message: 'No stock found for the branch' });
+      return;
+    }
+    res.status(200).json({ data: stocks });
+  } catch (err: any) {
+    console.error('Error fetching stock by branch:', err.message);
     next(err);
   }
 };
