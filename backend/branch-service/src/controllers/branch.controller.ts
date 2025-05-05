@@ -92,7 +92,7 @@ export const getBranchStock = async (req: Request, res: Response) => {
   const { id: branchId } = req.params;
 
   try {
-    const response = await axios.get(`${STOCK_SERVICE_URL}?branchId=${branchId}`);
+    const response = await axios.get(`${STOCK_SERVICE_URL}/branch/${branchId}`);
     res.status(200).json({
       message: 'Branch stock fetched successfully',
       data: response.data.data,
@@ -101,4 +101,112 @@ export const getBranchStock = async (req: Request, res: Response) => {
     console.error('Error fetching branch stock:', error.message);
     res.status(500).json({ message: 'Failed to fetch branch stock' });
   }
+};
+
+export const adjustBranchStock = (req: Request, res: Response): void => {
+  const { id: branchId } = req.params;
+  const { productId, quantityChange } = req.body;
+
+  // 1) fetch existing stock record
+  axios
+    .get(`${STOCK_SERVICE_URL}/branch/${branchId}/product/${productId}`)
+    .then(response => {
+      const records = response.data.data;
+      if (!records || records.length === 0) {
+        return Promise.reject({ status: 404, message: 'Stock record not found for this product in branch' });
+      }
+      const stockRecord = records[0];
+      const newQuantity = stockRecord.quantity + quantityChange;
+      const stockId = stockRecord._id;
+
+      // 2) update it with the new quantity
+      return axios.put(`${STOCK_SERVICE_URL}/${stockId}`, { quantity: newQuantity });
+    })
+    .then(updatedResponse => {
+      res.status(200).json({
+        message: 'Stock adjusted successfully',
+        data: updatedResponse.data,
+      });
+    })
+    .catch(err => {
+      if (err.status === 404) {
+        return res.status(404).json({ message: err.message });
+      }
+      console.error('Error adjusting stock:', err.message || err);
+      res.status(500).json({ message: 'Failed to adjust stock' });
+    });
+};
+
+import RestockRequest from '../models/restockRequest.model';
+// Create a new restock request using Promises
+export const createRestockRequest = (req: Request, res: Response): void => {
+  const { id: branchId } = req.params;
+  const { productId, quantity } = req.body;
+
+  const request = new RestockRequest({ branchId, productId, quantity });
+
+  request
+    .save()
+    .then(savedRequest => {
+      res.status(201).json({ message: 'Restock request created', data: savedRequest });
+    })
+    .catch(err => {
+      console.error('Error creating restock request:', err.message || err);
+      res.status(500).json({ message: 'Failed to create restock request' });
+    });
+};
+
+// Approve a restock request using Promises
+export const approveRestockRequest = (req: Request, res: Response): void => {
+  const { restockId } = req.params;
+
+  RestockRequest.findByIdAndUpdate(
+    restockId,
+    { status: 'approved' },
+    { new: true }
+  )
+    .then(updatedRequest => {
+      if (!updatedRequest) {
+        return Promise.reject({ status: 404, message: 'Restock request not found' });
+      }
+
+      // OPTIONAL: If you want to bump the stock automatically, you could chain another promise here:
+      // return axios.get(...)
+      //   .then(...) // fetch current stock
+      //   .then(...) // axios.put to adjust stock
+      //   .then(() => updatedRequest);
+
+      res.status(200).json({ message: 'Restock request approved', data: updatedRequest });
+    })
+    .catch(err => {
+      if (err.status === 404) {
+        return res.status(404).json({ message: err.message });
+      }
+      console.error('Error approving restock request:', err.message || err);
+      res.status(500).json({ message: 'Failed to approve restock request' });
+    });
+};
+
+// Reject a restock request using Promises
+export const rejectRestockRequest = (req: Request, res: Response): void => {
+  const { restockId } = req.params;
+
+  RestockRequest.findByIdAndUpdate(
+    restockId,
+    { status: 'rejected' },
+    { new: true }
+  )
+    .then(updatedRequest => {
+      if (!updatedRequest) {
+        return Promise.reject({ status: 404, message: 'Restock request not found' });
+      }
+      res.status(200).json({ message: 'Restock request rejected', data: updatedRequest });
+    })
+    .catch(err => {
+      if (err.status === 404) {
+        return res.status(404).json({ message: err.message });
+      }
+      console.error('Error rejecting restock request:', err.message || err);
+      res.status(500).json({ message: 'Failed to reject restock request' });
+    });
 };

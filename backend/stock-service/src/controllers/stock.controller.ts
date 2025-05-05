@@ -135,3 +135,31 @@ export const getStockByBranchId = async (
     next(err);
   }
 };
+
+export const getStockByBranchAndProduct = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { branchId, productId } = req.params;
+
+    if (!branchId || !productId) {
+      res.status(400).json({ message: 'branchId and productId are required' });
+      return;
+    }
+
+    const stocks = await StockOverview.find({ branchId, productId });
+
+    if (!stocks.length) {
+      res.status(404).json({ message: 'No stock found for this branch and product' });
+      return;
+    }
+
+    res.status(200).json({ data: stocks });
+  } catch (err: any) {
+    console.error('Error fetching stock by branch and product:', err.message);
+    next(err);
+  }
+};
+

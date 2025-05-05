@@ -7,6 +7,7 @@ import {
   deleteStock,
   getStockByWarehouseId,
   getStockByBranchId,
+  getStockByBranchAndProduct,
 } from '../controllers/stock.controller';
 
 const router = Router();
@@ -23,5 +24,7 @@ router.get('/warehouse/:warehouseId', getStockByWarehouseId);
 
 // Stock-by-branch (query param ?branchId=...)
 router.get('/branch/:branchId', getStockByBranchId);
+router.get('/branch/:branchId/product/:productId', getStockByBranchAndProduct);
+
 
 export default router;

@@ -4,11 +4,15 @@ import express from 'express';
 const router = express.Router();
 
 import {
+  adjustBranchStock,
+  approveRestockRequest,
   createBranch,
+  createRestockRequest,
   getAllBranches,
   getBranchesByWarehouseId,
   getBranchStock,
   getBranchWithWarehouseInfo,
+  rejectRestockRequest,
 } from '../controllers/branch.controller';
 
 
@@ -19,5 +23,11 @@ router.post('/branches', createBranch);
 router.get('/branches', getAllBranches);
 
 router.get('/branches/:id/stock', getBranchStock);
+router.post('/branches/:id/stock-adjust', adjustBranchStock);
+
+router.post('/branches/:id/restock', createRestockRequest);
+
+router.post('/branches/:branchId/restock/:restockId/approve', approveRestockRequest);
+router.post('/branches/:branchId/restock/:restockId/reject', rejectRestockRequest);
 
 export default router;
