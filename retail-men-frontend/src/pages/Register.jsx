@@ -1,23 +1,24 @@
-// src/pages/Register.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { registerUser } from '../api/auth';
 
 const Register = () => {
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState('company');
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const data = await registerUser({ email, password, role });
+      const data = await registerUser({ username, email, password, confirmPassword, role });
       if (data.success) {
         alert('Registration successful');
         navigate('/login');
       } else {
-        alert('Registration failed');
+        alert(`Registration failed: ${data.message || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Registration error', error);
@@ -28,6 +29,10 @@ const Register = () => {
     <div className="register-form">
       <h2>Register</h2>
       <form onSubmit={handleSubmit}>
+        <label>Username:
+          <input type="text" value={username}
+            onChange={(e) => setUsername(e.target.value)} required />
+        </label>
         <label>Email:
           <input type="email" value={email}
             onChange={(e) => setEmail(e.target.value)} required />
@@ -35,6 +40,10 @@ const Register = () => {
         <label>Password:
           <input type="password" value={password}
             onChange={(e) => setPassword(e.target.value)} required />
+        </label>
+        <label>Confirm Password:
+          <input type="password" value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)} required />
         </label>
         <label>Role:
           <select value={role} onChange={(e) => setRole(e.target.value)}>
