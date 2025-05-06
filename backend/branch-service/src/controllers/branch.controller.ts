@@ -210,3 +210,19 @@ export const rejectRestockRequest = (req: Request, res: Response): void => {
       res.status(500).json({ message: 'Failed to reject restock request' });
     });
 };
+
+export const createStockRequest = async (req, res) => {
+  const { warehouseId, productId, quantity } = req.body;
+  const branchId = req.body.branchId; // or from auth
+  
+  try {
+    const { data } = await axios.post(
+      `${STOCK_SERVICE_URL}/stock-requests`,
+      { warehouseId, branchId, productId, quantity }
+    );
+    res.status(201).json({ message: 'Stock request placed', data });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Failed to place stock request' });
+  }
+};

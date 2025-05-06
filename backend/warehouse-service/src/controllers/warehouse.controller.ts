@@ -114,3 +114,61 @@ export const getWarehouseStock = async (req: Request, res: Response): Promise<vo
     res.status(500).json({ message: 'Failed to fetch stock data' });
   }
 };
+
+export const approveStockRequest = (req: Request, res: Response): void => {
+  const { requestId } = req.params;
+
+  axios
+    .post(`${STOCK_SERVICE_URL}/api/stocks/stock-requests/${requestId}/approve`)
+    .then(response => {
+      // `response.data` holds the body sent by the stock-service
+      res.json({
+        message: 'Approved via stock service',
+        data: response.data,
+      });
+    })
+    .catch(err => {
+      console.error('Failed to approve via stock service:', err.message || err);
+      res.status(500).json({
+        message: 'Failed to approve via stock service',
+      });
+    });
+};
+
+// Reject via Stock-Service (Promises)
+export const rejectStockRequest = (req: Request, res: Response): void => {
+  const { requestId } = req.params;
+
+  axios
+    .post(`${STOCK_SERVICE_URL}/stock-requests/${requestId}/reject`)
+    .then(response => {
+      res.json({
+        message: 'Rejected via stock service',
+        data: response.data,
+      });
+    })
+    .catch(err => {
+      console.error('Failed to reject via stock service:', err.message || err);
+      res.status(500).json({
+        message: 'Failed to reject via stock service',
+      });
+    });
+};
+
+
+const COMPANY_SERVICE_URL = process.env.COMPANY_SERVICE_URL || 'http://localhost:5001';
+
+// POST /api/warehouses/:warehouseId/replenish-requests
+export const requestReplenish = async (req: Request, res: Response) => {
+  const { warehouseId } = req.params;
+  const { companyId, productId, quantity } = req.body;
+  try {
+    const response = await axios.post(
+      `${COMPANY_SERVICE_URL}/api/company/${companyId}/replenish-requests`,
+      { warehouseId, productId, quantity }
+    );
+    res.status(201).json(response.data);
+  } catch (err: any) {
+    res.status(500).json({ message: 'Failed to send replenish request', error: err.message });
+  }
+};

@@ -149,3 +149,98 @@ export const getCompaniesByNames = async (
     next(err);
   }
 };
+
+import ReplenishRequest from '../models/replenishRequest.model';
+
+const STOCK_SERVICE_URL = process.env.STOCK_SERVICE_URL || 'http://localhost:5005';
+
+// POST /api/companies/:companyId/replenish-requests
+export const createReplenishRequest = (req: Request, res: Response) => {
+  const { companyId } = req.params;
+  const { warehouseId, productId, quantity } = req.body;
+
+  const reqDoc = new ReplenishRequest({ companyId, warehouseId, productId, quantity });
+
+  reqDoc.save()
+    .then(savedDoc => {
+      res.status(201).json({ message: 'Replenish request created', data: savedDoc });
+    })
+    .catch(err => {
+      console.error('Error creating replenish request:', err);
+      res.status(500).json({ message: 'Failed to create replenish request' });
+    });
+};
+
+// POST /api/companies/replenish-requests/:requestId/approve
+export const approveReplenishRequest = (req: Request, res: Response) => {
+  const { requestId } = req.params;
+
+  ReplenishRequest.findById(requestId)
+    .then(reqDoc => {
+      if (!reqDoc || reqDoc.status !== 'pending') {
+        return Promise.reject({ status: 404, message: 'Not found or already processed' });
+      }
+      // 1) bump warehouse stock in Stock Service
+      return axios.put(
+        `${STOCK_SERVICE_URL}/api/stocks/warehouse/${reqDoc.warehouseId}/product/${reqDoc.productId}`,
+        { quantityChange: reqDoc.quantity }
+      )
+      .then(() => reqDoc);
+    })
+    .then(reqDoc => {
+      // 2) mark approved
+      reqDoc.status = 'approved';
+      return reqDoc.save();
+    })
+    .then(updatedDoc => {
+      res.json({ message: 'Replenish request approved', data: updatedDoc });
+    })
+    .catch(err => {
+      if (err && typeof err.status === 'number') {
+        return res.status(err.status).json({ message: err.message });
+      }
+      console.error('Error approving replenish request:', err);
+      res.status(500).json({ message: 'Failed to approve replenish request' });
+    });
+};
+
+// POST /api/companies/replenish-requests/:requestId/reject
+export const rejectReplenishRequest = (req: Request, res: Response) => {
+  const { requestId } = req.params;
+
+  ReplenishRequest.findByIdAndUpdate(
+    requestId,
+    { status: 'rejected' },
+    { new: true }
+  )
+    .then(updatedDoc => {
+      if (!updatedDoc) {
+        return res.status(404).json({ message: 'Not found' });
+      }
+      res.json({ message: 'Replenish request rejected', data: updatedDoc });
+    })
+    .catch(err => {
+      console.error('Error rejecting replenish request:', err);
+      res.status(500).json({ message: 'Failed to reject replenish request' });
+    });
+};
+
+export const handleReplenishRequest = async (req: Request, res: Response) => {
+  const { companyId } = req.params;
+  const { warehouseId, productId, quantity } = req.body;
+
+  // You can add your actual replenish logic here.
+  console.log(
+    `Replenish request received for Company ${companyId}: Warehouse ${warehouseId}, Product ${productId}, Qty ${quantity}`
+  );
+
+  res.status(201).json({
+    message: 'Replenish request received',
+    data: {
+      companyId,
+      warehouseId,
+      productId,
+      quantity,
+    },
+  });
+};

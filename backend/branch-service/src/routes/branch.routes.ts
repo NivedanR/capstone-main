@@ -8,6 +8,7 @@ import {
   approveRestockRequest,
   createBranch,
   createRestockRequest,
+  createStockRequest,
   getAllBranches,
   getBranchesByWarehouseId,
   getBranchStock,
@@ -29,5 +30,6 @@ router.post('/branches/:id/restock', createRestockRequest);
 
 router.post('/branches/:branchId/restock/:restockId/approve', approveRestockRequest);
 router.post('/branches/:branchId/restock/:restockId/reject', rejectRestockRequest);
+router.post('/stock-requests', createStockRequest);
 
 export default router;

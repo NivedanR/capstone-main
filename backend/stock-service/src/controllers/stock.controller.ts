@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import StockOverview from '../models/stockOverview.model';
+import StockRequest from '../models/StockRequest.model';
 
-// Create
+// Create stock
 export const createStock = async (
   req: Request,
   res: Response,
@@ -16,7 +17,7 @@ export const createStock = async (
   }
 };
 
-// Get all
+// Get all stocks
 export const getAllStocks = async (
   req: Request,
   res: Response,
@@ -30,7 +31,7 @@ export const getAllStocks = async (
   }
 };
 
-// Get by ID
+// Get stock by ID
 export const getStockById = async (
   req: Request,
   res: Response,
@@ -48,18 +49,14 @@ export const getStockById = async (
   }
 };
 
-// Update
+// Update stock
 export const updateStock = async (
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
-    const stock = await StockOverview.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
+    const stock = await StockOverview.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!stock) {
       res.status(404).json({ message: 'Stock not found' });
       return;
@@ -70,7 +67,7 @@ export const updateStock = async (
   }
 };
 
-// Delete
+// Delete stock
 export const deleteStock = async (
   req: Request,
   res: Response,
@@ -88,7 +85,7 @@ export const deleteStock = async (
   }
 };
 
-// Get by warehouseId
+// Get stock by warehouseId
 export const getStockByWarehouseId = async (
   req: Request,
   res: Response,
@@ -112,14 +109,14 @@ export const getStockByWarehouseId = async (
   }
 };
 
-// Get by branchId (from query string)
+// Get stock by branchId
 export const getStockByBranchId = async (
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
-    const branchId = req.params.branchId as string;
+    const { branchId } = req.params;
     if (!branchId) {
       res.status(400).json({ message: 'branchId is required' });
       return;
@@ -136,6 +133,7 @@ export const getStockByBranchId = async (
   }
 };
 
+// Get stock by branchId and productId
 export const getStockByBranchAndProduct = async (
   req: Request,
   res: Response,
@@ -163,3 +161,101 @@ export const getStockByBranchAndProduct = async (
   }
 };
 
+// Create stock request
+export const createStockRequest = (req: Request, res: Response): void => {
+  const { warehouseId, branchId, productId, quantity } = req.body;
+
+  StockRequest.create({ warehouseId, branchId, productId, quantity })
+    .then(request => {
+      res.status(201).json({
+        message: 'Request created',
+        data: request,
+      });
+    })
+    .catch(err => {
+      console.error('Failed to create request:', err);
+      res.status(500).json({ message: 'Failed to create request' });
+    });
+};
+
+// Approve stock request
+export const approveStockRequest = (req: Request, res: Response): void => {
+  const { requestId } = req.params;
+
+  StockRequest.findById(requestId)
+    .then(reqDoc => {
+      if (!reqDoc || reqDoc.status !== 'pending') {
+        return Promise.reject({ status: 404, message: 'Not found or already processed' });
+      }
+
+      return StockOverview.updateOne(
+        { warehouseId: reqDoc.warehouseId, productId: reqDoc.productId },
+        { $inc: { quantity: reqDoc.quantity } },
+        { upsert: true }
+      ).then(() => {
+        reqDoc.status = 'approved';
+        return reqDoc.save();
+      });
+    })
+    .then(updatedReqDoc => {
+      res.json({
+        message: 'Approved',
+        data: updatedReqDoc,
+      });
+    })
+    .catch(err => {
+      if (err.status === 404) {
+        return res.status(404).json({ message: err.message });
+      }
+      console.error('Failed to approve request:', err);
+      res.status(500).json({ message: 'Failed to approve' });
+    });
+};
+
+// Reject stock request
+export const rejectStockRequest = (req: Request, res: Response): void => {
+  const { requestId } = req.params;
+
+  StockRequest.findByIdAndUpdate(
+    requestId,
+    { status: 'rejected' },
+    { new: true }
+  )
+    .then(reqDoc => {
+      if (!reqDoc) {
+        return Promise.reject({ status: 404, message: 'Not found' });
+      }
+      res.json({
+        message: 'Rejected',
+        data: reqDoc,
+      });
+    })
+    .catch(err => {
+      if (err.status === 404) {
+        return res.status(404).json({ message: err.message });
+      }
+      console.error('Failed to reject request:', err);
+      res.status(500).json({ message: 'Failed to reject' });
+    });
+};
+
+// bump a warehouse’s stock for a single product
+export const updateStockForWarehouseProduct = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { warehouseId, productId } = req.params;
+  const { quantityChange } = req.body;
+  try {
+    // upsert a StockOverview doc
+    const stock = await StockOverview.findOneAndUpdate(
+      { warehouseId, productId },
+      { $inc: { quantity: quantityChange } },
+      { upsert: true, new: true }
+    );
+    res.json({ message: 'Stock updated', data: stock });
+  } catch (err: any) {
+    next(err);
+  }
+};
