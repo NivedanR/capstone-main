@@ -9,8 +9,11 @@ const UserManagement = () => {
 
   useEffect(() => {
     const getUsers = async () => {
-      const data = await fetchUsers(token);
-      setUsers(data.users || []);
+    //   const data = await fetchUsers(token);
+    //   setUsers(data.users || []);
+    const data = await fetchUsers(token);
+ // if the backend returns the array directly:
+ setUsers(Array.isArray(data) ? data : data.users || []);
     };
     getUsers();
   }, [token]);
