@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.rejectReplenishRequest = exports.approveReplenishRequest = exports.createReplenishRequest = exports.getCompaniesByNames = exports.getCompanyWithProducts = exports.getCompanyById = exports.getCompanies = exports.createCompany = void 0;
+exports.handleReplenishRequest = exports.rejectReplenishRequest = exports.approveReplenishRequest = exports.createReplenishRequest = exports.getCompaniesByNames = exports.getCompanyWithProducts = exports.getCompanyById = exports.getCompanies = exports.createCompany = void 0;
 const company_model_1 = __importDefault(require("../models/company.model"));
 const axios_1 = __importDefault(require("axios"));
 const createCompany = async (req, res, next) => {
@@ -181,3 +181,19 @@ const rejectReplenishRequest = (req, res) => {
     });
 };
 exports.rejectReplenishRequest = rejectReplenishRequest;
+const handleReplenishRequest = async (req, res) => {
+    const { companyId } = req.params;
+    const { warehouseId, productId, quantity } = req.body;
+    // You can add your actual replenish logic here.
+    console.log(`Replenish request received for Company ${companyId}: Warehouse ${warehouseId}, Product ${productId}, Qty ${quantity}`);
+    res.status(201).json({
+        message: 'Replenish request received',
+        data: {
+            companyId,
+            warehouseId,
+            productId,
+            quantity,
+        },
+    });
+};
+exports.handleReplenishRequest = handleReplenishRequest;

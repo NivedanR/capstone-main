@@ -9,8 +9,19 @@ const CompanyList = () => {
 
   useEffect(() => {
     const getCompanies = async () => {
+      // const data = await fetchCompanies(token);
+      // // setCompanies(data.companies || []);
+      // // setCompanies(data || []);
+      // setCompanies(Array.isArray(companies) ? companies : companies.companies);
       const data = await fetchCompanies(token);
-      setCompanies(data.companies || []);
+      console.log('data',data);
+     // if your API returns a plain array:
+     if (Array.isArray(data)) {
+      setCompanies(data);
+    } else {
+      // or if it wraps: { companies: [...] }
+       setCompanies(data.companies || []);
+     }
     };
     getCompanies();
   }, [token]);

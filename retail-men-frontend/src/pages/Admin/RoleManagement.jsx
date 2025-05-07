@@ -10,7 +10,8 @@ const RoleManagement = () => {
   useEffect(() => {
     const getRoles = async () => {
       const data = await fetchRoles(token);
-      setRoles(data.roles || []);
+      // setRoles(data.roles || []);
+      setRoles(data || []);
     };
     getRoles();
   }, [token]);

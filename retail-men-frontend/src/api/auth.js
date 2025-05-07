@@ -32,3 +32,26 @@ export const fetchRoles = async (token) => {
   });
   return response.json();
 };
+
+export const updateUserRole = async (userId, role, token) => {
+  const response = await fetch(`http://localhost:5000/api/auth/users/${userId}/role`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify({ role })
+  });
+  return response.json();
+};
+
+export const deleteUser = async (userId, token) => {
+  const response = await fetch(`http://localhost:5000/api/auth/users/${userId}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  return response.json();
+};
+
