@@ -1,9 +1,9 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface ProductItem {
-  productId: mongoose.Types.ObjectId;
+  product: mongoose.Types.ObjectId;
   quantity: number;
-  priceAtSale: number;
+  price: number;
   discount: number;
   total: number;
 }
@@ -14,7 +14,7 @@ export interface Order extends Document {
   salesPersonId: mongoose.Types.ObjectId;
   customerName: string;
   customerPhone: string;
-  products: ProductItem[];
+  items: ProductItem[];
   totalAmount: number;
   paymentMode: 'Cash' | 'Card' | 'UPI' | 'Wallet';
   paymentStatus: 'Paid' | 'Pending';
@@ -22,9 +22,9 @@ export interface Order extends Document {
 }
 
 const productItemSchema: Schema = new Schema({
-  productId: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
+  product: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
   quantity: { type: Number, required: true },
-  priceAtSale: { type: Number, required: true },
+  price: { type: Number, required: true },
   discount: { type: Number, default: 0 },
   total: { type: Number, required: true }
 });
@@ -36,7 +36,7 @@ const orderSchema: Schema = new Schema(
     salesPersonId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     customerName: { type: String, required: true },
     customerPhone: { type: String, required: true },
-    products: [productItemSchema],
+    items: [productItemSchema],
     totalAmount: { type: Number, required: true },
     paymentMode: { type: String, enum: ['Cash', 'Card', 'UPI', 'Wallet'], required: true },
     paymentStatus: { type: String, enum: ['Paid', 'Pending'], required: true },

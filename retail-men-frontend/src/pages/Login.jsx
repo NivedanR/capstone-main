@@ -1,7 +1,7 @@
 // src/pages/Login.jsx
 import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { loginUser } from '../api/auth';
+import authApi from '../api/auth';
 import AuthContext from '../context/AuthContext';
 
 const Login = () => {
@@ -9,19 +9,16 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const data = await loginUser({ email, password });
-      if (data.token) {
-        login(data.token);
-        navigate('/user-management');
-      } else {
-        alert('Login failed');
-      }
+      const response = await authApi.loginUser({ email, password });
+      login(response.token);
+      navigate('/dashboard');
     } catch (error) {
-      console.error('Login error', error);
+      setError(error.message || 'Login failed');
     }
   };
 
@@ -40,6 +37,7 @@ const Login = () => {
         <button type="submit">Login</button>
       </form>
       <p>Don't have an account? <a href="/register">Register here</a>.</p>
+      {error && <p className="error">{error}</p>}
     </div>
   );
 };

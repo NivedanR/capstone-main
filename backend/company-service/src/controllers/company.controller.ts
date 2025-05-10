@@ -1,4 +1,3 @@
-
 import { Request, Response, NextFunction } from 'express';
 import Company from '../models/company.model';
 import axios from 'axios';
@@ -11,17 +10,43 @@ export const createCompany = async (
   try {
     const { name, contactPerson, contactEmail, contactPhone, address } = req.body;
 
-    const existing = await Company.findOne({ contactEmail });
-    if (existing) {
-      res.status(400).json({ message: 'Company already exists' });
+    // Check for existing company with same name (case-insensitive)
+    const existingByName = await Company.findOne({
+      name: { $regex: new RegExp(`^${name}$`, 'i') }
+    });
+    if (existingByName) {
+      res.status(400).json({ 
+        message: 'Company already exists',
+        details: 'A company with this name already exists'
+      });
       return;
     }
 
-    const newCompany = new Company({ name, contactPerson, contactEmail, contactPhone, address });
+    // Check for existing company with same email
+    const existingByEmail = await Company.findOne({ contactEmail });
+    if (existingByEmail) {
+      res.status(400).json({ 
+        message: 'Company already exists',
+        details: 'A company with this email already exists'
+      });
+      return;
+    }
+
+    const newCompany = new Company({ 
+      name: name.trim(),
+      contactPerson, 
+      contactEmail: contactEmail.toLowerCase(),
+      contactPhone, 
+      address 
+    });
     await newCompany.save();
 
-    res.status(201).json({ message: 'Company created', company: newCompany });
+    res.status(201).json({ 
+      message: 'Company created successfully', 
+      company: newCompany 
+    });
   } catch (err: any) {
+    console.error('Error creating company:', err);
     next(err);
   }
 };
@@ -134,7 +159,7 @@ export const getCompaniesByNames = async (
 
     console.log('🛠 MongoDB RegExp array:', regexArray);
 
-    // Find companies based on the names
+    
     const companies = await Company.find({
       name: { $in: regexArray }
     });

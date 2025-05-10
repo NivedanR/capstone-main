@@ -1,6 +1,7 @@
 // src/controllers/sales.controller.ts
 import { RequestHandler } from 'express';
 import * as salesService from '../services/sales.service';
+import OrderModel, { Order } from '../models/order.model';
 
 export const createOrder: RequestHandler = async (req, res, next) => {
   try {
@@ -65,6 +66,61 @@ export const deleteOrder: RequestHandler = async (req, res, next) => {
     return;
   } catch (error: any) {
     console.error('Delete order error:', error);
+    next(error);
+  }
+};
+
+export const getSalesAnalytics: RequestHandler = async (req, res, next) => {
+  try {
+    const { timeRange } = req.query;
+    const analytics = await salesService.getSalesAnalytics(timeRange as string);
+    res.json({ 
+      message: 'Sales analytics fetched successfully',
+      data: analytics 
+    });
+    return;
+  } catch (error: any) {
+    console.error('Get sales analytics error:', error);
+    next(error);
+  }
+};
+
+export const getSalesData: RequestHandler = async (req, res, next) => {
+  try {
+    const { startDate, endDate } = req.query;
+    
+    const query: any = {};
+    if (startDate) {
+      query.createdAt = { $gte: new Date(startDate as string) };
+    }
+    if (endDate) {
+      query.createdAt = { ...query.createdAt, $lte: new Date(endDate as string) };
+    }
+
+    const orders = await OrderModel.find(query)
+      .sort({ createdAt: 1 })
+      .populate('items.product');
+
+    // Group orders by date and calculate daily totals
+    const dailySales = orders.reduce((acc: any[], order: Order) => {
+      const date = order.createdAt.toISOString().split('T')[0];
+      const existingDay = acc.find(day => day.date === date);
+      
+      if (existingDay) {
+        existingDay.amount += order.totalAmount || 0;
+      } else {
+        acc.push({
+          date,
+          amount: order.totalAmount || 0
+        });
+      }
+      
+      return acc;
+    }, []);
+
+    res.json(dailySales);
+  } catch (error: any) {
+    console.error('Get sales data error:', error);
     next(error);
   }
 };

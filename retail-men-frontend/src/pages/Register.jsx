@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { registerUser } from '../api/auth';
+import authApi from '../api/auth';
 
 const Register = () => {
   const [username, setUsername] = useState('');
@@ -8,20 +8,25 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState('company');
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
     try {
-      const data = await registerUser({ username, email, password, confirmPassword, role });
-      if (data.success) {
-        alert('Registration successful');
-        navigate('/login');
-      } else {
-        alert(`Registration failed: ${data.message || 'Unknown error'}`);
-      }
+      await authApi.registerUser({ 
+        email, 
+        password, 
+        username,
+        role 
+      });
+      navigate('/login');
     } catch (error) {
-      console.error('Registration error', error);
+      setError(error.message || 'Registration failed');
     }
   };
 
@@ -57,6 +62,7 @@ const Register = () => {
         <button type="submit">Register</button>
       </form>
       <p>Already have an account? <a href="/login">Login here</a>.</p>
+      {error && <p className="error">{error}</p>}
     </div>
   );
 };
